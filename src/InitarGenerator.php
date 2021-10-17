@@ -29,27 +29,32 @@ class InitarGenerator
 
     private $defaultFontColor = '#ffffff';
 
+    private $defaultStoragePath = 'app/public';
 
-    public function __construct()
+    private $storagePath;
+
+    private $user;
+
+
+    public function __construct($user)
     {
-        $this->defineBackgroundColor();
+        $this->user = $user;
     }
 
-    /**
-     * @throws UserColumnNameNotFoundException
-     * @throws InitialsAreInvalidException
-     */
-    public function generate($user)
+    public function generate()
     {
         $this->drawCanvas();
 
-        $this->writeInitialsInMiddle($user);
+        $this->writeInitialsInMiddle();
 
-        return $this->canvas;
+        $this->defineAvatarPath();
+
+        return ['avatar' => $this->canvas, 'path' => $this->storagePath];
     }
 
     private function drawCanvas()
     {
+        $this->defineBackgroundColor();
         $this->canvas = Image::canvas($this->width, $this->height);
         $this->canvas->circle(
             $this->width * $this->fourByThreeRatio,
@@ -60,22 +65,22 @@ class InitarGenerator
             });
     }
 
-    /**
-     * @throws UserColumnNameNotFoundException
-     * @throws InitialsAreInvalidException
-     */
-    private function writeInitialsInMiddle($user)
+    private function writeInitialsInMiddle()
     {
-        $this->defineInitials($user);
+        $this->defineInitials();
         $this->defineFontColor();
-        $this->canvas->text($this->initials, 150, 150, function ($text) {
-            $text->file(public_path('vendor/initar/fonts/Cousine.ttf'));
-            $text->size($this->fontSize);
-            $text->color($this->fontColor);
-            $text->valign('middle');
-            $text->align('center');
-            $text->angle('360');
-        });
+        $this->canvas->text(
+            $this->initials,
+            $this->width / 2,
+            $this->width / 2,
+            function ($text) {
+                $text->file(public_path('vendor/initar/fonts/Cousine.ttf'));
+                $text->size($this->fontSize);
+                $text->color($this->fontColor);
+                $text->valign('middle');
+                $text->align('center');
+                $text->angle('360');
+            });
 
     }
 
@@ -97,17 +102,9 @@ class InitarGenerator
         }
     }
 
-    private function isHex($color)
+    private function defineInitials()
     {
-        return preg_match('/^#[0-9A-F]{6}$/i', $color);
-    }
 
-    /**
-     * @throws UserColumnNameNotFoundException
-     * @throws InitialsAreInvalidException
-     */
-    private function defineInitials($user)
-    {
         $configUserColumnName = config('initar.user_column_name');
 
         if (is_null($configUserColumnName)) {
@@ -115,12 +112,12 @@ class InitarGenerator
         }
 
         if (is_iterable($configUserColumnName)) {
-            $firstLetter = $user[$configUserColumnName[0]][0];
-            $secondLetter = $user[$configUserColumnName[1]][0];
+            $firstLetter = $this->user[$configUserColumnName[0]][0];
+            $secondLetter = $this->user[$configUserColumnName[1]][0];
         }
         if (is_string($configUserColumnName)) {
-            $firstLetter = $user[$configUserColumnName][0];
-            $secondLetter = $user[$configUserColumnName][1];
+            $firstLetter = $this->user[$configUserColumnName][0];
+            $secondLetter = $this->user[$configUserColumnName][1];
         }
 
         if (!isset($firstLetter) || !isset($secondLetter) || !is_string($firstLetter) || !is_string($secondLetter)) {
@@ -145,5 +142,31 @@ class InitarGenerator
                 ? $configFontColor
                 : $this->defaultFontColor;
         }
+    }
+
+    private function defineAvatarPath()
+    {
+        // Base path
+        $configStoragePathForAvatar = config('initar.storage_path_for_avatar');
+
+        if (is_null($configStoragePathForAvatar)) {
+            $this->storagePath = $this->defaultStoragePath;
+        }
+
+        if (is_string($configStoragePathForAvatar)) {
+            $this->storagePath = $configStoragePathForAvatar;
+        }
+
+        $this->storagePath = rtrim($this->storagePath, '/') . '/';
+
+        // Base path + Avatar name + extension
+        $primaryKey = $this->user->primaryKey;
+
+        $this->storagePath .= $this->user[$primaryKey] . '.png';
+    }
+
+    private function isHex($color)
+    {
+        return preg_match('/^#[0-9A-F]{6}$/i', $color);
     }
 }
