@@ -9,7 +9,6 @@
             "email": "jesestrod1@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
             "Jestevezrod\\Initar\\": "src"
@@ -17,7 +16,8 @@
     },
     "require": {
         "php": "^7.4",
-        "illuminate/contracts": "^8.0"
+        "illuminate/contracts": "^8.0",
+        "intervention/image": "^2.7"
     },
     "require-dev": {
         "orchestra/testbench": "^6.0",
@@ -29,8 +29,14 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Jestevezrod\\Initar\\Providers\\InitarServiceProvider"
+                "Jestevezrod\\Initar\\InitarServiceProvider",
+                "Intervention\\Image\\ImageServiceProvider"
             ]
         }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump"
+        ]
     }
 }
