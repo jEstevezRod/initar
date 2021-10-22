@@ -36,3 +36,5 @@ php artisan vendor:publish
 
 You should modify the config file to make the package works as you desire. For instance you can add a list of colors to be used as background color of the avatar.
 
+
+Author: Jesus Estevez
